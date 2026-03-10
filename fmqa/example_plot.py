@@ -1,6 +1,7 @@
+import argparse
+
 import numpy as np
 import matplotlib.pyplot as plt
-import dimod
 import fmqa
 
 
@@ -21,8 +22,23 @@ def two_complement(x, scaling=True):
     return val * (2 ** (1 - n) if scaling else 1)
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--backend",
+        choices=["dimod-sa", "tytan-sa"],
+        default="dimod-sa",
+        help="使用するアニーリングバックエンド",
+    )
+    parser.add_argument("--num-reads", type=int, default=3, help="各反復で追加するサンプル数")
+    parser.add_argument("--num-steps", type=int, default=15, help="学習とサンプリングの反復回数")
+    parser.add_argument("--seed", type=int, default=0, help="乱数シード")
+    return parser.parse_args()
+
+
 def main():
-    np.random.seed(0)
+    args = parse_args()
+    np.random.seed(args.seed)
 
     # 初期データ
     xs = np.random.randint(2, size=(5, 16))
@@ -31,13 +47,10 @@ def main():
     # FMQAモデル作成
     model = fmqa.FMBQM.from_data(xs, ys)
 
-    # Simulated Annealing sampler
-    sa_sampler = dimod.samplers.SimulatedAnnealingSampler()
-
     # 15回更新、毎回3サンプル追加
-    for _ in range(15):
-        res = sa_sampler.sample(model, num_reads=3)
-        new_xs = res.record["sample"].astype(np.int64)  # ここも修正
+    for _ in range(args.num_steps):
+        res = fmqa.Annealer.sample(model, backend=args.backend, num_reads=args.num_reads, seed=args.seed)
+        new_xs = res.samples.astype(np.int64)
         new_ys = np.array([two_complement(x) for x in new_xs], dtype=float)
 
         xs = np.r_[xs, new_xs]

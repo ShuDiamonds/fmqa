@@ -63,11 +63,16 @@ import fmqa
 model = fmqa.FMBQM.from_data(xs, ys)
 ```
 
-We use simulated annealing from `dimod` package here to solve the trained model.
+We can solve the trained model with either simulated annealing from `dimod` or TYTAN's simulated annealing.
 
 ```python
-import dimod
-sa_sampler = dimod.samplers.SimulatedAnnealingSampler()
+import fmqa
+
+# D-Wave Ocean / dimod simulated annealing
+res = fmqa.Annealer.sample(model, backend="dimod-sa", num_reads=3)
+
+# TYTAN simulated annealing
+# res = fmqa.Annealer.sample(model, backend="tytan-sa", num_reads=3)
 ```
 
 We repeat taking 3 samples at once and updating the model for 15 times
@@ -75,9 +80,9 @@ We repeat taking 3 samples at once and updating the model for 15 times
 
 ```python
 for _ in range(15):
-    res = sa_sampler.sample(model, num_reads=3)
-    xs = np.r_[xs, res.record['sample']]
-    ys = np.r_[ys, [two_complement(x) for x in res.record['sample']]]
+    res = fmqa.Annealer.sample(model, backend="dimod-sa", num_reads=3)
+    xs = np.r_[xs, res.samples]
+    ys = np.r_[ys, [two_complement(x) for x in res.samples]]
     model.train(xs, ys)
 ```
 
@@ -94,6 +99,23 @@ plt.show()
 ![image](https://user-images.githubusercontent.com/15908202/64800217-205ed100-d5c1-11e9-8d29-b2d13bcb0e53.png)
 
 We can see that the sampling go down to near optimal as the dataset grows.
+
+
+### TYTAN backend
+
+To use TYTAN simulated annealing, install TYTAN separately. The project keeps it as an optional dependency.
+
+```bash
+pip install tytan
+# or
+pip install git+https://github.com/tytansdk/tytan
+```
+
+You can then run the example with:
+
+```bash
+python -m fmqa.example_plot --backend tytan-sa
+```
 
 ## License
 
