@@ -1,0 +1,6 @@
+diff.txt
+fmqa/*.png
+fmqa/*.jpg
+.DS_Store
+fmqa/__pycache__/
+.venv/
