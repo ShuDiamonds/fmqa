@@ -3,4 +3,6 @@ fmqa/*.png
 fmqa/*.jpg
 .DS_Store
 fmqa/__pycache__/
+tests/__pycache__/
+*/__pycache__/
 .venv/

@@ -11,6 +11,7 @@ dimod = "^0.12.21"
 pytest = "^9.0.2"
 torch = ">=2.0.0"
 pip-audit = "^2.10.0"
+tytan = {git = "https://github.com/tytansdk/tytan"}
 
 
 [tool.poetry.group.dev.dependencies]
@@ -19,3 +20,6 @@ matplotlib = "^3.10.8"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.extras]
+tytan = []
