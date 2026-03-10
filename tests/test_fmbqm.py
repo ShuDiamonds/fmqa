@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-pytest.importorskip("mxnet")
+pytest.importorskip("torch")
 dimod = pytest.importorskip("dimod")
 
 from dimod.vartypes import Vartype

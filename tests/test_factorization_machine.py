@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-mx = pytest.importorskip("mxnet")
-nd = mx.nd
+pytest.importorskip("torch")
+import torch
 
 from fmqa.factorization_machine import FactorizationMachine, VtoQ, triu_mask
 
@@ -19,7 +19,7 @@ def test_triu_mask_generates_expected_upper_triangle():
         - 上三角のみ1であること
         - input_size=4 のとき期待値と一致すること
     """
-    actual = triu_mask(4, nd).asnumpy()
+    actual = triu_mask(4, torch).detach().cpu().numpy()
     expected = np.array(
         [
             [0.0, 1.0, 1.0, 1.0],
@@ -47,8 +47,8 @@ def test_vtoq_returns_upper_triangular_inner_product():
         - 対角および下三角が0になること
         - 小さな固定行列で期待値一致すること
     """
-    V = nd.array([[1.0, 2.0, 3.0], [0.0, 1.0, 1.0]])
-    actual = VtoQ(V, nd).asnumpy()
+    V = torch.tensor([[1.0, 2.0, 3.0], [0.0, 1.0, 1.0]], dtype=torch.float32)
+    actual = VtoQ(V, torch).detach().cpu().numpy()
     expected = np.array(
         [
             [0.0, 2.0, 3.0],
@@ -78,9 +78,9 @@ def test_factorization_machine_initialization_shapes():
 
     assert model.input_size == 5
     assert model.factorization_size == 3
-    assert model.h.shape == (5,)
-    assert model.V.shape == (3, 5)
-    assert model.bias.shape == (1,)
+    assert tuple(model.h.shape) == (5,)
+    assert tuple(model.V.shape) == (3, 5)
+    assert tuple(model.bias.shape) == (1,)
 
 
 def test_get_bhQ_returns_expected_shapes_and_upper_triangle():
@@ -124,7 +124,7 @@ def test_factorization_machine_zero_factorization_returns_zero_q():
     model.train(x, y, num_epoch=150, learning_rate=0.05)
 
     bias, h, Q = model.get_bhQ()
-    pred = model(nd.array(x)).asnumpy()
+    pred = model(torch.tensor(x, dtype=torch.float32)).detach().cpu().numpy()
 
     assert np.isscalar(bias)
     assert h.shape == (2,)
@@ -157,12 +157,12 @@ def test_factorization_machine_training_reduces_mse_for_linear_data():
     model = FactorizationMachine(input_size=2, factorization_size=0, act="identity")
     model.init_params()
 
-    before = model(nd.array(x)).asnumpy()
+    before = model(torch.tensor(x, dtype=torch.float32)).detach().cpu().numpy()
     before_mse = np.mean((y - before) ** 2)
 
     model.train(x, y, num_epoch=250, learning_rate=0.05)
 
-    after = model(nd.array(x)).asnumpy()
+    after = model(torch.tensor(x, dtype=torch.float32)).detach().cpu().numpy()
     after_mse = np.mean((y - after) ** 2)
 
     assert after_mse < before_mse
@@ -184,7 +184,7 @@ def test_factorization_machine_supports_activation_options(act):
     model = FactorizationMachine(input_size=2, factorization_size=1, act=act)
     model.init_params()
     model.train(x, y, num_epoch=5, learning_rate=0.01)
-    pred = model(nd.array(x)).asnumpy()
+    pred = model(torch.tensor(x, dtype=torch.float32)).detach().cpu().numpy()
 
     assert pred.shape == (3,)
 
@@ -201,4 +201,4 @@ def test_factorization_machine_invalid_activation_raises_keyerror():
     model.init_params()
 
     with pytest.raises(KeyError):
-        model(nd.array([[0.0, 1.0]], dtype=np.float32))
+        model(torch.tensor([[0.0, 1.0]], dtype=torch.float32))
